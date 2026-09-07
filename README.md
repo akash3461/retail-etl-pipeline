@@ -183,7 +183,7 @@ source venv/bin/activate
 4. Install the required packages:
 
 ```bash
-pip install -r requiremenst.txt
+pip install -r requirements.txt
 ```
 
 5. Run the pipeline:
