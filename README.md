@@ -2,9 +2,9 @@
 
 This project is a Python-based Data Engineering pipeline built using a retail transaction dataset.
 
-The pipeline takes raw CSV data, cleans and transforms it, performs data quality checks, optimizes the data types to reduce memory usage, and finally stores the processed data in Parquet format.
+The pipeline takes raw CSV data, cleans and transforms it, performs data quality checks, optimizes data types to reduce memory usage, and finally stores the processed data in Parquet format.
 
-The main purpose of this project was to get hands-on experience with the basic ETL workflow and understand how raw data is prepared for further analysis and data engineering tasks.
+The main purpose of this project was to get hands-on experience with the fundamentals of an ETL workflow and understand how raw data is prepared for further analysis and data engineering tasks.
 
 ---
 
@@ -14,21 +14,86 @@ The main purpose of this project was to get hands-on experience with the basic E
 ┌───────────┐      ┌──────────────────────┐      ┌─────────────────────────────┐      ┌─────────────────────┐      ┌─────────────────┐
 │  Raw CSV  │ ───► │ Ingestion & Cleaning │ ───► │ Transformation & Validation │ ───► │ Memory Optimization │ ───► │ Parquet Storage │
 └───────────┘      └──────────────────────┘      └─────────────────────────────┘      └─────────────────────┘      └─────────────────┘
-                                                             │
-                                                             └──► pipeline.log
+                                                                                                   │
+                                                                                                   └──► pipeline.log
 ```
+
+---
 
 ## What the Pipeline Does
 
-- **Data Ingestion:** Loads the raw CSV file using Pandas with `cp1252` encoding.
-- **Data Inspection:** Checks the dataset structure, data types, missing values, and duplicate records.
-- **Data Cleaning:** Removes duplicate rows, handles missing product descriptions, converts dates, and removes invalid negative `UnitPrice` values.
-- **Negative Values:** Negative `Quantity` values are kept because they can represent returns or cancelled transactions. Negative `UnitPrice` values are removed because they were treated as invalid pricing records for this project.
-- **Feature Engineering:** Creates `TotalAmount` using `Quantity × UnitPrice` and extracts `Year`, `Month`, and `Day` from `InvoiceDate`.
-- **Data Validation:** Checks duplicates, invalid dates, negative prices, calculation errors, missing values, and required columns.
-- **Memory Optimization:** Optimizes numeric and categorical columns to reduce the DataFrame's memory usage.
-- **Parquet Output:** Saves the final processed dataset as a Parquet file.
-- **Logging:** Records important pipeline events and results in `pipeline.log`.
+### 1. Data Ingestion
+
+Loads the raw CSV dataset using Pandas.
+
+The dataset uses `cp1252` encoding because the source file contains special characters such as the `£` symbol.
+
+### 2. Data Inspection
+
+The pipeline inspects:
+
+- Dataset shape
+- Column names
+- Data types
+- Statistical summary
+- Missing values
+- Duplicate records
+
+### 3. Data Cleaning
+
+The pipeline:
+
+- Removes duplicate rows
+- Handles missing product descriptions
+- Converts `InvoiceDate` from string to datetime
+- Removes invalid negative `UnitPrice` records
+
+### 4. Negative Values
+
+Negative `Quantity` values are retained because they can represent returned or cancelled transactions.
+
+Negative `UnitPrice` values are removed because they were treated as invalid pricing records for this project.
+
+### 5. Feature Engineering
+
+The pipeline creates:
+
+- `TotalAmount` = `Quantity × UnitPrice`
+- `Year` extracted from `InvoiceDate`
+- `Month` extracted from `InvoiceDate`
+- `Day` extracted from `InvoiceDate`
+
+### 6. Data Validation
+
+The pipeline performs checks for:
+
+- Duplicate records
+- Negative `UnitPrice`
+- Invalid `InvoiceDate`
+- Incorrect `TotalAmount` calculations
+- Missing values
+- Required columns
+
+### 7. Memory Optimization
+
+The pipeline optimizes DataFrame memory usage by using more appropriate data types.
+
+Examples include:
+
+- Downcasting `Quantity`
+- Converting `UnitPrice` to `float32`
+- Converting `TotalAmount` to `float32`
+- Converting `CustomerID` to nullable `Int32`
+- Converting `Country` to `category`
+- Converting `Description` to `category`
+
+### 8. Parquet Output
+
+The cleaned and optimized dataset is saved as a Parquet file for efficient analytical storage.
+
+### 9. Logging
+
+The pipeline uses Python's `logging` module to record important execution events and results in `pipeline.log`.
 
 ---
 
@@ -39,19 +104,26 @@ The main purpose of this project was to get hands-on experience with the basic E
 | Storage Format | CSV | Parquet | Columnar format |
 | Rows | 541,909 | 536,639 | 5,268 duplicates + 2 invalid price rows removed |
 | Columns | 8 | 12 | 4 new derived columns |
-| Memory Usage | ~173.52 MB | ~89.06 MB | ~48.68% reduction |
+| DataFrame Memory* | 58.89 MB | 38.71 MB | 34.3% reduction |
+| Parquet File Size | — | 4.26 MB | Final processed output |
 
-### Row Processing
+\*Memory figures represent the DataFrame memory measured during the optimization stage of the pipeline.
 
-The original dataset contained **541,909 rows**.
+---
 
-During cleaning:
+## Row Processing
+
+The original dataset contained:
+
+**541,909 rows**
+
+During the cleaning process:
 
 - **5,268 duplicate rows** were removed.
 - **2 rows with negative `UnitPrice` values** were removed.
-- Negative `Quantity` values were kept because they can represent returns or cancelled transactions.
+- Negative `Quantity` values were retained because they can represent returns or cancelled transactions.
 
-Final row count:
+The final row count was:
 
 ```text
 541,909
@@ -61,9 +133,26 @@ Final row count:
 536,639 final rows
 ```
 
-### Memory Optimization
+The final dataset contains:
 
-The DataFrame memory usage was reduced from approximately **173.52 MB to 89.06 MB**, which is a reduction of approximately **48.68%** in my run.
+- **536,639 rows**
+- **12 columns**
+
+---
+
+## Memory Optimization
+
+During the memory optimization stage, DataFrame memory usage was reduced from:
+
+```text
+58.89 MB → 38.71 MB
+```
+
+This represents a:
+
+```text
+34.3% memory reduction
+```
 
 The optimization included:
 
@@ -73,6 +162,8 @@ The optimization included:
 - Converting `CustomerID` to nullable `Int32`
 - Converting `Country` to `category`
 - Converting `Description` to `category`
+
+Memory optimization helps reduce the amount of RAM required when processing larger datasets.
 
 ---
 
@@ -85,7 +176,7 @@ retail-etl-pipeline/
 │   └── Data.csv
 │
 ├── Output/
-│   └── clean_ecommerce_data.parquet
+│   └── Clean_ecommerce_data.parquet
 │
 ├── logs/
 │   └── pipeline.log
@@ -99,31 +190,46 @@ retail-etl-pipeline/
 └── README.md
 ```
 
-> The raw dataset and generated output files can be excluded from GitHub using `.gitignore` if required.
+> The raw dataset and generated output files should be excluded from GitHub using `.gitignore`.
 
 ---
 
 ## Technologies Used
 
-- Python
-- Pandas
-- PyArrow
-- Parquet
-- Git
-- GitHub
+- **Python**
+- **Pandas**
+- **PyArrow**
+- **Apache Parquet**
+- **Git**
+- **GitHub**
 
 ---
 
 ## Repository and Dataset
 
-- **Project repository:** [github.com/akash3461/retail-etl-pipeline](https://github.com/akash3461/retail-etl-pipeline)
-- **Source dataset:** [E-commerce Data on Kaggle](https://www.kaggle.com/datasets/carrie1/ecommerce-data?resource=download)
+### Project Repository
 
-The project uses the **Online Retail** dataset from Kaggle. The downloaded file should be saved as `Data/Data.csv` before running the pipeline.
+[Retail Transaction ETL & Optimization Pipeline](https://github.com/akash3461/retail-etl-pipeline)
 
-### Download the Dataset with KaggleHub
+### Source Dataset
 
-Install KaggleHub if it is not already available:
+[E-commerce Data — Kaggle](https://www.kaggle.com/datasets/carrie1/ecommerce-data)
+
+The project uses the **Online Retail** dataset.
+
+The downloaded CSV file should be placed inside the project as:
+
+```text
+Data/Data.csv
+```
+
+---
+
+## Download the Dataset with KaggleHub
+
+The dataset can also be downloaded using KaggleHub.
+
+Install KaggleHub:
 
 ```bash
 pip install kagglehub
@@ -134,13 +240,24 @@ Then run:
 ```python
 import kagglehub
 
-# Download the latest version
 path = kagglehub.dataset_download("carrie1/ecommerce-data")
 
 print("Path to dataset files:", path)
 ```
 
-Copy the downloaded CSV file to the project's `Data` folder and rename it to `Data.csv` if necessary.
+Copy the downloaded CSV file to the project's `Data` folder and rename it to:
+
+```text
+Data.csv
+```
+
+The final location should be:
+
+```text
+retail-etl-pipeline/
+└── Data/
+    └── Data.csv
+```
 
 ---
 
@@ -148,142 +265,293 @@ Copy the downloaded CSV file to the project's `Data` folder and rename it to `Da
 
 ### Prerequisites
 
+Make sure the following are installed:
+
 - Python 3.9 or higher
 - pip
+- Git
 
-### Installation
+---
 
-1. Clone the repository:
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/akash3461/retail-etl-pipeline.git
+
 cd retail-etl-pipeline
 ```
 
-2. Create a virtual environment:
+---
+
+### 2. Create a Virtual Environment
 
 ```bash
 python -m venv venv
 ```
 
-3. Activate the virtual environment.
+---
 
-**Windows:**
+### 3. Activate the Virtual Environment
+
+#### Windows
 
 ```bash
 venv\Scripts\activate
 ```
 
-**Linux/macOS:**
+#### Linux/macOS
 
 ```bash
 source venv/bin/activate
 ```
 
-4. Install the required packages:
+---
+
+### 4. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-5. Run the pipeline:
+The main dependencies are:
+
+```text
+pandas
+pyarrow
+```
+
+---
+
+### 5. Add the Dataset
+
+Place the downloaded CSV file at:
+
+```text
+Data/Data.csv
+```
+
+---
+
+### 6. Run the Pipeline
 
 ```bash
 python pipeline.py
 ```
 
-After the pipeline finishes, the processed Parquet file will be available in the `Output` folder.
+After successful execution:
 
-Pipeline execution logs will be available in the `logs` folder.
+- The processed Parquet file will be created in `Output/`
+- Pipeline logs will be created in `logs/`
+
+Expected output structure:
+
+```text
+Output/
+└── Clean_ecommerce_data.parquet
+
+logs/
+└── pipeline.log
+```
 
 ---
 
 ## Data Validation
 
-The pipeline performs several checks before generating the final output:
+The pipeline performs several data quality checks before generating the final output.
 
-- Duplicate row check
-- Negative `UnitPrice` check
-- Invalid `InvoiceDate` check
-- `TotalAmount` calculation check
-- Missing value check
-- Required column check
+### Duplicate Check
 
-The pipeline reports validation results in the terminal and stores execution information in the log file.
+Checks whether duplicate records remain after cleaning.
 
-`CustomerID` can contain missing values in the original dataset, so these values were not removed during cleaning.
+### Negative Price Check
+
+Checks whether any negative `UnitPrice` values remain.
+
+### Invoice Date Check
+
+Checks for invalid or unconvertible `InvoiceDate` values.
+
+### Total Amount Check
+
+Verifies that:
+
+```text
+TotalAmount = Quantity × UnitPrice
+```
+
+### Missing Value Check
+
+Checks for remaining missing values.
+
+`CustomerID` can contain missing values in the original dataset. These records were intentionally retained rather than removing the corresponding transactions.
+
+### Required Column Check
+
+Checks whether all expected columns are present before completing the pipeline.
 
 ---
 
 ## Pipeline Logging
 
-The pipeline uses Python's `logging` module to keep track of important events during execution.
+The pipeline uses Python's built-in `logging` module to record important execution events.
 
-Example:
+The log file is stored at:
+
+```text
+logs/pipeline.log
+```
+
+Example log events:
 
 ```text
 Data loading started
+
 Dataset loaded successfully
+
 Data cleaning and transformation started
+
 Removed 5268 duplicate rows
+
+Handled missing Description values
+
 Created TotalAmount column
+
 Created Year, Month and Day columns
+
 Data validation completed
+
 Starting memory optimization
+
 Parquet file saved successfully
 ```
 
-The actual timestamps and messages depend on the pipeline run.
+The actual timestamps and messages depend on each pipeline execution.
 
 ---
 
 ## Why Parquet?
 
-The final data is stored in Parquet instead of CSV because Parquet is a columnar storage format that is well suited for analytical workloads.
+The final processed dataset is stored in Parquet instead of CSV.
 
-It also preserves data types better than a plain CSV file and can be used easily with many data engineering and analytics tools.
+Parquet is a columnar storage format commonly used for analytical workloads.
+
+Some advantages include:
+
+- Efficient column-based storage
+- Better preservation of data types
+- Smaller storage footprint
+- Faster analytical reads for selected columns
+- Compatibility with many Data Engineering and analytics tools
+
+The final Parquet file generated by this pipeline was approximately:
+
+```text
+4.26 MB
+```
+
+---
+
+## ETL Workflow
+
+The complete workflow implemented in this project is:
+
+```text
+Extract
+   ↓
+Inspect
+   ↓
+Clean
+   ↓
+Transform
+   ↓
+Validate
+   ↓
+Optimize
+   ↓
+Load
+```
+
+In practical terms:
+
+```text
+Raw CSV
+   ↓
+Pandas DataFrame
+   ↓
+Data Cleaning
+   ↓
+Feature Engineering
+   ↓
+Data Validation
+   ↓
+Memory Optimization
+   ↓
+Parquet
+```
 
 ---
 
 ## What I Learned
 
-This project helped me understand the basic ETL process by actually working with a real-world style dataset.
+This project helped me understand the fundamentals of a Data Engineering ETL pipeline by working with a real-world retail transaction dataset.
 
-I practiced:
+Through this project, I practiced:
 
-- Loading and inspecting data with Pandas
-- Cleaning messy data
+- Loading data with Pandas
+- Inspecting a dataset
+- Understanding data types
 - Handling missing values
-- Working with duplicate records
+- Removing duplicate records
 - Handling negative transaction values
+- Converting dates
 - Creating derived columns
-- Validating data
+- Performing data validation
 - Optimizing DataFrame memory usage
 - Working with Parquet
-- Adding logging to a pipeline
-- Organizing a Data Engineering project
+- Adding logging
+- Structuring a Data Engineering project
 - Using Git and GitHub
 
-The overall workflow is:
+The main lesson from this project was that an ETL pipeline is not just about moving data from one place to another.
 
-**Extract → Transform → Validate → Optimize → Load**
+The data needs to be:
+
+**Clean → Validated → Correctly Typed → Optimized → Stored**
+
+before it is ready for downstream analysis or further processing.
 
 ---
 
 ## Future Improvements
 
-Some things I would like to add to this project later:
+This project currently focuses on the fundamentals of a batch ETL pipeline.
+
+Possible future improvements include:
 
 - Automated data quality tests
 - Unit tests
 - Configuration files
 - PostgreSQL integration
+- Incremental data processing
 - Airflow scheduling
 - Cloud storage
-- CI/CD
+- CI/CD pipeline
+- Containerization with Docker
+
+These improvements can be explored in later Data Engineering projects.
 
 ---
 
 ## Author
 
 Built as part of my **100-Day Data Engineering learning journey**.
+
+The project focuses on learning the fundamentals of:
+
+**Python → ETL → Data Quality → Optimization → Parquet → Git/GitHub**
+
+---
+
+## License
+
+This project is created for learning and portfolio purposes.
