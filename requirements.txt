@@ -1,2 +1,2 @@
-pandas
-pyarrow
+pandas==2.2.3
+pyarrow==18.1.0
